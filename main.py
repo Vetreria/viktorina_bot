@@ -4,10 +4,6 @@ def open_file():
     q_a = {}
     with open("DATA/quiz-questions/1vs1200.txt", "r", encoding="KOI8_R") as file:
         file_contents = file.read()
-        # for line in file:
-        #     key, *value = line.split(":")
-            
-        #     q_a[key] = value
         file_contents_splitten = file_contents.split('\n\n')
         questions = [question for question in file_contents_splitten if 'Вопрос' in question]
         answers = [answer for answer in file_contents_splitten if 'Ответ' in answer]
