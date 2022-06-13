@@ -1,5 +1,9 @@
+import os
+import random
+
+
 def open_file():
-    with open("DATA/quiz-questions/1vs1200.txt", "r", encoding="KOI8_R") as file:
+    with open(f'DATA/quiz-questions/{random.choice(os.listdir("DATA/quiz-questions/"))}', "r", encoding="KOI8_R") as file:
         return file.read()
 
 

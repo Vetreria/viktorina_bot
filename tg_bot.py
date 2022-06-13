@@ -49,19 +49,20 @@ def answer_check(update: Update, context: CallbackContext):
              update.message.reply_text('Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»')
     elif update.message.text == 'Сдаться':
         update.message.reply_text(f'Правильный {answer}')
-        return SEND_QUESTION
     else:
         update.message.reply_text('Неправильно... Попробуешь ещё раз?')
+    return SEND_QUESTION
    
 
 def start(update: Update, context: CallbackContext):
     update.message.reply_text('Привет! Я бот для викторин!', reply_markup=get_buttons())
+    logger.warning(update.effective_user.id)
     return SEND_QUESTION
 
 
-def error(bot, update, error):
+def error(update: Update, context: CallbackContext):
     """Log Errors caused by Updates."""
-    logger.warning('Update "%s" caused error "%s"', update, error)
+    logger.warning('Update "%s" caused error "%s"', update, exc_info=context.error)
 
 
 def cancel(update: Update, context: CallbackContext):
@@ -90,10 +91,6 @@ def main():
     updater = Updater(qa_tg_bot)
     dp = updater.dispatcher
     dp.bot_data['redis_connect'] = redis_connect
-    # dp.add_handler(CommandHandler("start", start))
-    # dp.add_handler(MessageHandler(Filters.regex("Новый вопрос"), get_question))
-    # dp.add_handler(MessageHandler(Filters.regex("Сдаться"), get_answer))
-    # dp.add_handler(MessageHandler(Filters.text, answer_check))
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
 
