@@ -100,7 +100,8 @@ def main():
                                get_question)],
 
             CHECK_ANSWER: [MessageHandler(Filters.text, answer_check)],
-        }
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
     )
     dp.add_handler(conv_handler)
     dp.add_error_handler(error)
