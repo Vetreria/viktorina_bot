@@ -1,5 +1,4 @@
 import logging
-from multiprocessing import context
 import os
 import json
 import dotenv
@@ -38,6 +37,22 @@ def get_answer(update: Update, context: CallbackContext):
         f"tg-{update.effective_user.id}")
     question, answer = json.loads(qa)
     update.message.reply_text(answer)
+
+def answer_check(update: Update, context: CallbackContext):
+    redis_connect = context.bot_data['redis_connect']
+    qa = redis_connect.get(
+        f"tg-{update.effective_user.id}")
+    user_answer = f'ответ:\n{update.message.text}'    
+    question, answer = json.loads(qa)
+    if user_answer.lower().strip('.') == answer.lower().strip('.'):
+             update.message.reply_text('Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»')
+    else:
+        update.message.reply_text('Неправильно... Попробуешь ещё раз?')
+    print(user_answer.lower().strip('.'))
+    print(user_answer)
+    print(answer.lower().strip('.'))
+
+    
      
 
 def start(update: Update, context: CallbackContext):
@@ -49,9 +64,9 @@ def start(update: Update, context: CallbackContext):
 #     update.message.reply_text(update.message.text)
 
 
-# def error(bot, update, error):
-#     """Log Errors caused by Updates."""
-#     logger.warning('Update "%s" caused error "%s"', update, error)
+def error(bot, update, error):
+    """Log Errors caused by Updates."""
+    logger.warning('Update "%s" caused error "%s"', update, error)
 
 
 def main():
@@ -73,10 +88,10 @@ def main():
     dp.add_handler(CommandHandler("start", start))
 
     # dp.add_handler(CallbackQueryHandler("Новый вопрос", get_question))
-    # dp.add_handler(MessageHandler(Filters.text, echo))
     dp.add_handler(MessageHandler(Filters.regex("Новый вопрос"), get_question))
     dp.add_handler(MessageHandler(Filters.regex("Сдаться"), get_answer))
-    # dp.add_error_handler(error)
+    dp.add_handler(MessageHandler(Filters.text, answer_check))
+    dp.add_error_handler(error)
     updater.start_polling(timeout=600)
     updater.idle()
     logger.warning('Бот закрылся')
