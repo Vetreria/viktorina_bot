@@ -3,8 +3,8 @@ import os
 import json
 import dotenv
 import random
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ForceReply
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, CallbackContext
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ForceReply, ReplyKeyboardRemove
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackQueryHandler, CallbackContext, ConversationHandler
 import redis
 
 
@@ -13,7 +13,7 @@ from main import get_qa
 
 
 logger = logging.getLogger(__name__)
-
+SEND_QUESTION, CHECK_ANSWER = range(2)
 
 def get_buttons():
     buttons = [['Новый вопрос', 'Сдаться'],
@@ -28,7 +28,7 @@ def get_question(update: Update, context: CallbackContext):
     redis_connect.set(
         f"tg-{update.effective_user.id}", json.dumps([question, answer]))
     update.message.reply_text(question)
-    # print (answer)
+    return CHECK_ANSWER
 
 
 def get_answer(update: Update, context: CallbackContext):
@@ -37,6 +37,7 @@ def get_answer(update: Update, context: CallbackContext):
         f"tg-{update.effective_user.id}")
     question, answer = json.loads(qa)
     update.message.reply_text(answer)
+    
 
 def answer_check(update: Update, context: CallbackContext):
     redis_connect = context.bot_data['redis_connect']
@@ -46,27 +47,31 @@ def answer_check(update: Update, context: CallbackContext):
     question, answer = json.loads(qa)
     if user_answer.lower().strip('.') == answer.lower().strip('.'):
              update.message.reply_text('Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»')
+    elif update.message.text == 'Сдаться':
+        update.message.reply_text(f'Правильный {answer}')
+        return SEND_QUESTION
     else:
         update.message.reply_text('Неправильно... Попробуешь ещё раз?')
-    print(user_answer.lower().strip('.'))
-    print(user_answer)
-    print(answer.lower().strip('.'))
-
-    
-     
+   
 
 def start(update: Update, context: CallbackContext):
     update.message.reply_text('Привет! Я бот для викторин!', reply_markup=get_buttons())
-
-
-# def echo(bot, update):
-#     """Echo the user message."""
-#     update.message.reply_text(update.message.text)
+    return SEND_QUESTION
 
 
 def error(bot, update, error):
     """Log Errors caused by Updates."""
     logger.warning('Update "%s" caused error "%s"', update, error)
+
+
+def cancel(update: Update, context: CallbackContext):
+    user = update.message.from_user
+    logger.info("User %s canceled the conversation.", user.first_name)
+    update.message.reply_text(
+        'Пока. Хорошего вам дня!',
+        reply_markup=ReplyKeyboardRemove()
+    )
+    return ConversationHandler.END
 
 
 def main():
@@ -85,12 +90,23 @@ def main():
     updater = Updater(qa_tg_bot)
     dp = updater.dispatcher
     dp.bot_data['redis_connect'] = redis_connect
-    dp.add_handler(CommandHandler("start", start))
+    # dp.add_handler(CommandHandler("start", start))
+    # dp.add_handler(MessageHandler(Filters.regex("Новый вопрос"), get_question))
+    # dp.add_handler(MessageHandler(Filters.regex("Сдаться"), get_answer))
+    # dp.add_handler(MessageHandler(Filters.text, answer_check))
+    conv_handler = ConversationHandler(
+        entry_points=[CommandHandler('start', start)],
 
-    # dp.add_handler(CallbackQueryHandler("Новый вопрос", get_question))
-    dp.add_handler(MessageHandler(Filters.regex("Новый вопрос"), get_question))
-    dp.add_handler(MessageHandler(Filters.regex("Сдаться"), get_answer))
-    dp.add_handler(MessageHandler(Filters.text, answer_check))
+        states={
+            SEND_QUESTION: [
+                MessageHandler(Filters.regex('^(Новый вопрос|Сдаться)$'),
+                               get_question)],
+
+            CHECK_ANSWER: [MessageHandler(Filters.text, answer_check)],
+        },
+        fallbacks=[CommandHandler('cancel', cancel)],
+    )
+    dp.add_handler(conv_handler)
     dp.add_error_handler(error)
     updater.start_polling(timeout=600)
     updater.idle()
