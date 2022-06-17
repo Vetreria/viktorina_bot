@@ -9,7 +9,7 @@ import redis
 
 
 from logger import set_logger
-from main import get_qa
+from quiz import get_qa
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,8 @@ def get_buttons():
 
 def get_question(update: Update, context: CallbackContext):
     redis_connect = context.bot_data['redis_connect']
-    qa = get_qa()
+    dir_patch = context.bot_data['dir_patch']
+    qa = get_qa(dir_patch)
     question, answer = random.choice(list(qa.items()))
     redis_connect.set(
         f"tg-{update.effective_user.id}", json.dumps([question, answer]))
@@ -43,7 +44,7 @@ def answer_check(update: Update, context: CallbackContext):
     redis_connect = context.bot_data['redis_connect']
     qa = redis_connect.get(
         f"tg-{update.effective_user.id}")
-    user_answer = f'ответ:\n{update.message.text}'    
+    user_answer = update.message.text   
     question, answer = json.loads(qa)
     if user_answer.lower().strip('.') == answer.lower().strip('.'):
              update.message.reply_text('Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»')
@@ -77,6 +78,7 @@ def cancel(update: Update, context: CallbackContext):
 
 def main():
     dotenv.load_dotenv()
+    dir_patch = "DATA/quiz-questions"
     qa_tg_bot = os.environ["TG_VIKTORINA_BOT"]
     log_tg_bot = os.environ["LOG_BOT_TOKEN"]
     chat_id = os.environ["LOG_CHAT_TG"]
@@ -91,6 +93,7 @@ def main():
     updater = Updater(qa_tg_bot)
     dp = updater.dispatcher
     dp.bot_data['redis_connect'] = redis_connect
+    dp.bot_data['dir_patch'] = dir_patch
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
 
