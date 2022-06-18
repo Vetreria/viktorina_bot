@@ -1,12 +1,16 @@
-import random
-import logging
 import json
+import logging
 import os
+import random
+
+
 import dotenv
 import vk_api as vk
 from vk_api.keyboard import VkKeyboard
 from vk_api.longpoll import VkLongPoll, VkEventType
 import redis
+
+
 from logger import set_logger
 from quiz import get_qa
 
