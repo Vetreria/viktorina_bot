@@ -62,7 +62,7 @@ def get_answer(event, vk_api, redis_connect, dir_patch):
     )
     
 
-def answer_check(event, vk_api, redis_connect, dir_patch):
+def check_answer(event, vk_api, redis_connect, dir_patch):
     qa = redis_connect.get(
         f"vk-{event.user_id}")
     user_answer = event.text   
@@ -107,7 +107,7 @@ def main():
             elif event.text == 'Новый вопрос':
                 get_question(event, vk_api, redis_connect, dir_patch)
             else:
-                answer_check(event, vk_api, redis_connect, dir_patch)
+                check_answer(event, vk_api, redis_connect, dir_patch)
 
 
 if __name__ == "__main__":

@@ -42,7 +42,7 @@ def get_answer(update: Update, context: CallbackContext):
     update.message.reply_text(answer)
     
 
-def answer_check(update: Update, context: CallbackContext):
+def check_answer(update: Update, context: CallbackContext):
     redis_connect = context.bot_data['redis_connect']
     qa = redis_connect.get(
         f"tg-{update.effective_user.id}")
@@ -104,7 +104,7 @@ def main():
                 MessageHandler(Filters.regex('^(Новый вопрос|Сдаться)$'),
                                get_question)],
 
-            CHECK_ANSWER: [MessageHandler(Filters.text, answer_check)],
+            CHECK_ANSWER: [MessageHandler(Filters.text, check_answer)],
         },
         fallbacks=[CommandHandler('cancel', cancel)],
     )
