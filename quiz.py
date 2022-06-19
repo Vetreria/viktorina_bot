@@ -33,7 +33,6 @@ def send_qa_to_redis(redis_connect):
             redis_connect.set(f"question_{num}", json.dumps([question, quiz_qa[question]]))
 
 
-
 def main():
     dotenv.load_dotenv()
     redis_host=os.environ["REDIS_HOST"]
