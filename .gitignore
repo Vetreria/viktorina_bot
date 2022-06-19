@@ -1,8 +1,0 @@
-/bot_env
-.env
-/env
-.vscode
-__pycache__
-.gitignore
-.gitattributes
-
