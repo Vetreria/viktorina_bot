@@ -70,7 +70,7 @@ def answer_check(event, vk_api, redis_connect, dir_patch):
     if answer and user_answer.lower().strip('.') == answer.lower().strip('.'):
              message_text = 'Правильно! Для следующего вопроса нажми «Новый вопрос»'
     elif event.text == 'Сдаться':
-        message_text = f'Правильный {str(answer)}'
+        message_text = f'Правильный {answer}'
     else:
         message_text = 'Попробуйте ещё раз?'
     return vk_api.messages.send(
