@@ -32,6 +32,11 @@ def get_qa(dir_patch):
         json.dump(quiz_qa, file, ensure_ascii=False)
     # return quiz_qa
 
+def send_qa_to_redis():
+    with open(f"DATA/qa.json", 'r', encoding='utf8') as file:
+        quiz_qa = json.load(file)
+
+
 
 def main():
     dir_patch = "DATA/quiz-questions"
