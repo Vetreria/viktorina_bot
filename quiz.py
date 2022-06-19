@@ -33,7 +33,7 @@ def get_qa(dir_patch):
     # return quiz_qa
 
 def send_qa_to_redis():
-    with open(f"DATA/qa.json", 'r', encoding='utf8') as file:
+    with open(f"DATA/1qa.json", 'r', encoding='utf8') as file:
         quiz_qa = json.load(file)
 
 
