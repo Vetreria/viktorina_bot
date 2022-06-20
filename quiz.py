@@ -1,7 +1,6 @@
 import os
 import json
 import re
-
 import dotenv
 import redis
 
@@ -33,12 +32,6 @@ def send_qa_to_redis(redis_connect):
             redis_connect.set(f"question_{num}", json.dumps([question, quiz_qa[question]]))
 
 
-def test(redis_connect):
-    # redis_connect = context.bot_data['redis_connect']
-    # dir_patch = context.bot_data['dir_patch']
-    qa = redis_connect.randomkey()
-    print(qa)
-
 def main():
     dotenv.load_dotenv()
     redis_host=os.environ["REDIS_HOST"]
@@ -46,9 +39,8 @@ def main():
     redis_pwd=os.environ["REDIS_PASSWORD"]
     redis_connect = redis.Redis(host=redis_host, port=redis_port, db=0, password=redis_pwd)
     dir_patch = "DATA/quiz-questions"
-    # get_qa(dir_patch)
-    # send_qa_to_redis(redis_connect)
-    test(redis_connect)
+    get_qa(dir_patch)
+    send_qa_to_redis(redis_connect)
 
 
 if __name__ == '__main__':

@@ -2,6 +2,7 @@ import logging
 import os
 import json
 import random
+from tkinter.messagebox import QUESTION
 
 
 import dotenv
@@ -11,11 +12,11 @@ import redis
 
 
 from logger import set_logger
-from quiz import get_qa
 
 
 logger = logging.getLogger(__name__)
 SEND_QUESTION, CHECK_ANSWER = range(2)
+
 
 def get_buttons():
     buttons = [['Новый вопрос', 'Сдаться'],
@@ -25,37 +26,38 @@ def get_buttons():
 
 def get_question(update: Update, context: CallbackContext):
     redis_connect = context.bot_data['redis_connect']
-    dir_patch = context.bot_data['dir_patch']
-    qa = get_qa(dir_patch)
-    question, answer = random.choice(list(qa.items()))
+    qa = redis_connect.keys("question_*")
+    qa_random = random.choice(qa).decode('utf-8')
+    qa_value = redis_connect.get(qa_random)
+    question, answer = json.loads(qa_value)
+    print(question, answer)
     redis_connect.set(
-        f"tg-{update.effective_user.id}", json.dumps([question, answer]))
+        f"user_tg_{update.effective_user.id}", qa_random)
     update.message.reply_text(question)
     return CHECK_ANSWER
 
 
-def get_answer(update: Update, context: CallbackContext):
-    redis_connect = context.bot_data['redis_connect']
-    qa = redis_connect.get(
-        f"tg-{update.effective_user.id}")
-    question, answer = json.loads(qa)
-    update.message.reply_text(answer)
-    
-
 def check_answer(update: Update, context: CallbackContext):
     redis_connect = context.bot_data['redis_connect']
     qa = redis_connect.get(
-        f"tg-{update.effective_user.id}")
+        f"user_tg_{update.effective_user.id}")
     user_answer = update.message.text   
-    question, answer = json.loads(qa)
+    qa_value = redis_connect.get(qa)
+    question, answer = json.loads(qa_value)
+    print(
+        "\n", question, 
+        "\n", answer, 
+        "\n", user_answer.lower().strip('.'), 
+        "\n", answer.lower().strip('.')
+        )
     if user_answer.lower().strip('.') == answer.lower().strip('.'):
-             update.message.reply_text('Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»')
+        update.message.reply_text('Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»')
     elif update.message.text == 'Сдаться':
         update.message.reply_text(f'Правильный {answer}')
     else:
         update.message.reply_text('Неправильно... Попробуешь ещё раз?')
     return SEND_QUESTION
-   
+
 
 def start(update: Update, context: CallbackContext):
     update.message.reply_text('Привет! Я бот для викторин!', reply_markup=get_buttons())
