@@ -41,16 +41,10 @@ def check_answer(update: Update, context: CallbackContext):
     redis_connect = context.bot_data['redis_connect']
     qa = redis_connect.get(
         f"user_tg_{update.effective_user.id}")
-    user_answer = update.message.text   
+    user_answer = update.message.text.lower().strip('.')
     qa_value = redis_connect.get(qa)
     question, answer = json.loads(qa_value)
-    print(
-        "\n", question, 
-        "\n", answer, 
-        "\n", user_answer.lower().strip('.'), 
-        "\n", answer.lower().strip('.')
-        )
-    if user_answer.lower().strip('.') == answer.lower().strip('.'):
+    if answer.lower().strip('.').lstrip() == user_answer:
         update.message.reply_text('Правильно! Поздравляю! Для следующего вопроса нажми «Новый вопрос»')
     elif update.message.text == 'Сдаться':
         update.message.reply_text(f'Правильный {answer}')
