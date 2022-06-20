@@ -3,3 +3,4 @@
 .env
 \env
 /DATA/*
+__pycache__/*

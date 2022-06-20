@@ -12,7 +12,6 @@ import redis
 
 
 from logger import set_logger
-from quiz import get_qa
 
 
 logger = logging.getLogger(__name__)
@@ -37,11 +36,13 @@ def create_keyboard():
     return keyboard.get_keyboard()
 
 
-def get_question(event, vk_api, redis_connect, dir_patch):
-    qa = get_qa(dir_patch)
-    question, answer = random.choice(list(qa.items()))
+def get_question(event, vk_api, redis_connect):
+    qa = redis_connect.keys(r"question_*")
+    qa_random = random.choice(qa).decode("utf-8")
+    qa_value = redis_connect.get(qa_random)
+    question, answer = json.loads(qa_value)
     redis_connect.set(
-        f"vk-{event.user_id}", json.dumps([question, answer]))
+        f"user_vk_{event.user_id}", qa_random)
     return vk_api.messages.send(
         user_id=event.user_id,
         random_id=random.randint(1, 1000),
@@ -50,10 +51,10 @@ def get_question(event, vk_api, redis_connect, dir_patch):
     )
 
 
-def get_answer(event, vk_api, redis_connect, dir_patch):
-    qa = redis_connect.get(
-        f"vk-{event.user_id}")
-    question, answer = json.loads(qa)   
+def get_answer(event, vk_api, redis_connect):
+    qa = redis_connect.get(f"user_vk_{event.user_id}")
+    qa_value = redis_connect.get(qa)
+    question, answer = json.loads(qa_value)
     return vk_api.messages.send(
         user_id=event.user_id,
         random_id=random.randint(1, 1000),
@@ -62,12 +63,12 @@ def get_answer(event, vk_api, redis_connect, dir_patch):
     )
     
 
-def check_answer(event, vk_api, redis_connect, dir_patch):
-    qa = redis_connect.get(
-        f"vk-{event.user_id}")
-    user_answer = event.text   
-    question, answer = json.loads(qa)
-    if answer and user_answer.lower().strip('.') == answer.lower().strip('.'):
+def check_answer(event, vk_api, redis_connect):
+    qa = redis_connect.get(f"user_vk_{event.user_id}")
+    user_answer = event.text.lower().strip(".")
+    qa_value = redis_connect.get(qa)
+    question, answer = json.loads(qa_value)
+    if answer and user_answer.lower().strip('.') == answer.lower().strip('.').lstrip():
              message_text = 'Правильно! Для следующего вопроса нажми «Новый вопрос»'
     elif event.text == 'Сдаться':
         message_text = f'Правильный {answer}'
@@ -95,7 +96,6 @@ def main():
     logger.warning('Бот ВК запустился')
     longpoll = VkLongPoll(vk_session)
     redis_connect = redis.Redis(host=redis_host, port=redis_port, db=0, password=redis_pwd)
-    dir_patch = "DATA/quiz-questions"
 
 
     for event in longpoll.listen():
@@ -103,11 +103,11 @@ def main():
             if event.text == 'Привет':
                 start_quiz(event, vk_api)
             elif event.text == 'Сдаться':
-                get_answer(event, vk_api, redis_connect, dir_patch)
+                get_answer(event, vk_api, redis_connect)
             elif event.text == 'Новый вопрос':
-                get_question(event, vk_api, redis_connect, dir_patch)
+                get_question(event, vk_api, redis_connect)
             else:
-                check_answer(event, vk_api, redis_connect, dir_patch)
+                check_answer(event, vk_api, redis_connect)
 
 
 if __name__ == "__main__":

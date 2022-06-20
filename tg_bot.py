@@ -35,7 +35,6 @@ def get_question(update: Update, context: CallbackContext):
     qa_random = random.choice(qa).decode("utf-8")
     qa_value = redis_connect.get(qa_random)
     question, answer = json.loads(qa_value)
-    print(question, answer)
     redis_connect.set(f"user_tg_{update.effective_user.id}", qa_random)
     update.message.reply_text(question)
     return CHECK_ANSWER
