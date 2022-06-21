@@ -79,7 +79,6 @@ def cancel(update: Update, context: CallbackContext):
 
 def main():
     dotenv.load_dotenv()
-    dir_patch = "DATA/quiz-questions"
     qa_tg_bot = os.environ["TG_VIKTORINA_BOT"]
     log_tg_bot = os.environ["LOG_BOT_TOKEN"]
     chat_id = os.environ["LOG_CHAT_TG"]
@@ -95,7 +94,6 @@ def main():
     updater = Updater(qa_tg_bot)
     dp = updater.dispatcher
     dp.bot_data["redis_connect"] = redis_connect
-    dp.bot_data["dir_patch"] = dir_patch
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
